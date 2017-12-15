@@ -46,10 +46,10 @@ define-command -params ..1 find %{
 }
 
 hook -group find-highlight global WinSetOption filetype=find %{
-    add-highlighter group find
-    add-highlighter -group find dynregex '%opt{find_pattern}' 0:black,yellow
-    add-highlighter -group find regex "^([^\n]*?):(\d+):(\d+)?" 1:cyan,black 2:green,black 3:green,black
-    add-highlighter -group find line '%opt{find_current_line}' default+b
+    add-highlighter window group find
+    add-highlighter window/find dynregex '%opt{find_pattern}' 0:black,yellow
+    add-highlighter window/find regex "^([^\n]*?):(\d+):(\d+)?" 1:cyan,black 2:green,black 3:green,black
+    add-highlighter window/find line '%opt{find_current_line}' default+b
     # ensure whitespace is always after
     # kinda hacky
     try %{
@@ -63,7 +63,7 @@ hook global WinSetOption filetype=find %{
 }
 
 hook -group find-highlight global WinSetOption filetype=(?!find).* %{
-    remove-highlighter find
+    remove-highlighter window/find
 }
 
 hook global WinSetOption filetype=(?!find).* %{
