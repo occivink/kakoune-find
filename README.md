@@ -4,7 +4,7 @@
 
 [![demo](https://asciinema.org/a/138327.png)](https://asciinema.org/a/138327)
 
-## Install
+## Setup
 
 Add `find.kak` to your autoload dir: `~/.config/kak/autoload/`, or source it manually.
 
