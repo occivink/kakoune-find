@@ -45,29 +45,17 @@ define-command -params ..1 find %{
     }
 }
 
-hook -group find-highlight global WinSetOption filetype=find %{
-    add-highlighter window group find
-    add-highlighter window/find dynregex '%opt{find_pattern}' 0:black,yellow
-    add-highlighter window/find regex "^([^\n]*?):(\d+):(\d+)?" 1:cyan,black 2:green,black 3:green,black
-    add-highlighter window/find line '%opt{find_current_line}' default+b
-    # ensure whitespace is always after
-    # kinda hacky
-    try %{
-        remove-highlighter show_whitespaces
-        add-highlighter show_whitespaces
-    }
+hook global BufSetOption filetype=find %{
+    add-highlighter buffer group find
+    add-highlighter buffer/find dynregex '%opt{find_pattern}' 0:black,yellow
+    add-highlighter buffer/find regex "^([^\n]*?):(\d+):(\d+)?" 1:cyan,black 2:green,black 3:green,black
+    add-highlighter buffer/find line '%opt{find_current_line}' default+b
+    map buffer normal <ret> :find-jump<ret>
 }
 
-hook global WinSetOption filetype=find %{
-    hook buffer -group find-hooks NormalKey <ret> find-jump
-}
-
-hook -group find-highlight global WinSetOption filetype=(?!find).* %{
-    remove-highlighter window/find
-}
-
-hook global WinSetOption filetype=(?!find).* %{
-    remove-hooks buffer find-hooks
+hook global BufSetOption filetype=(?!find).* %{
+    remove-highlighter buffer/find
+    unmap buffer normal <ret> :find-jump<ret>
 }
 
 declare-option str jumpclient
