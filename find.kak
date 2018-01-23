@@ -59,11 +59,24 @@ hook global BufSetOption filetype=(?!find).* %{
 declare-option str jumpclient
 
 define-command find-apply-changes %{
-    eval -draft %{
+    eval -save-regs 'g/"' -draft %{
         exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
         eval -itersel %{
+            set-register 'g' %reg{2}
+            set-register '/' "\Q%reg{3}\E"
             set-register '"' %reg{3}
-            try %{ exec -buffer %reg{1} "%reg{2}g<a-x>HR" }
+            try %{
+                eval -buffer %reg{1} %{
+                    exec "%reg{g}g<a-x>H"
+                    # only change if the content is different
+                    # to avoid putting any noop in the undo stack
+                    try %{
+                        exec "s<ret>"
+                    } catch %{
+                        exec 'R'
+                    }
+                }
+            }
         }
     }
     echo "Changes applied successfully"
