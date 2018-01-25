@@ -20,7 +20,10 @@ define-command -params ..1 find %{
                 # create find buffer after we start iterating so as not to include it
                 eval -draft %{ edit -scratch *find* }
                 try %{
-                    exec '%s<ret><a-;>;'
+                    exec '%s<ret>'
+                    # merge selections that are on the same line
+                    exec '<a-l>'
+                    exec '<a-;>;'
                     eval -save-regs 'c"' -itersel %{
                         set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
                         # expand to full line and yank
