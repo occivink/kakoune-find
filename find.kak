@@ -61,20 +61,41 @@ hook global BufSetOption filetype=(?!find).* %{
 
 declare-option str jumpclient
 
-define-command find-apply-changes %{
-    eval -save-regs 'g/"' -draft %{
+define-command find-apply-impl -params 3 %{
+    eval -buffer %arg{1} %{
+        # only change if the content is different
+        # to avoid putting any noop in the undo stack
+        try %{
+            # go to the target line and select up to \n
+            exec "%arg{2}g<a-x>H"
+            # make sure the replacement is not a noop
+            set-register / "\Q%arg{3}\E"
+            exec "<a-K><c-r>/<ret>"
+            # replace
+            set-register '"' %arg{3}
+            exec R
+        }
+    }
+}
+define-command find-apply-force-impl -params 3 %{
+    try %{
+        find-apply-impl %arg{1} %arg{2} %arg{3}
+    } catch %{
+        # the buffer wasn't open: try editing it
+        # if this fails there is nothing we can do
+        eval -draft "edit -existing %arg{1}"
+        find-apply-impl %arg{1} %arg{2} %arg{3}
+        eval -buffer %arg{1} "write; delete-buffer"
+    }
+}
+
+define-command find-apply-changes -params ..1 %{
+    eval -save-regs 'c' -draft %{
+        # select all lines that match the *find* pattern
         exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
+        set-register c %sh{ if [ "$1" = "-force" ]; then printf find-apply-force-impl; else printf find-apply-impl; fi }
         eval -itersel %{
-            set-register 'g' %reg{2}
-            set-register '/' "\Q%reg{3}\E"
-            set-register '"' %reg{3}
-            try %{
-                eval -buffer %reg{1} %{
-                    # only change if the content is different
-                    # to avoid putting any noop in the undo stack
-                    try %{ exec "%reg{g}g<a-x>H<a-K><c-r>/<ret>R" }
-                }
-            }
+            try %{ %reg{c} %reg{1} %reg{2} %reg{3} }
         }
     }
     echo "Changes applied successfully"
