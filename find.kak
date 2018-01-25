@@ -67,14 +67,9 @@ define-command find-apply-changes %{
             set-register '"' %reg{3}
             try %{
                 eval -buffer %reg{1} %{
-                    exec "%reg{g}g<a-x>H"
                     # only change if the content is different
                     # to avoid putting any noop in the undo stack
-                    try %{
-                        exec "s<ret>"
-                    } catch %{
-                        exec 'R'
-                    }
+                    try %{ exec "%reg{g}g<a-x>H<a-K><c-r>/<ret>R" }
                 }
             }
         }
