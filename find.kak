@@ -69,7 +69,7 @@ define-command find-apply-impl -params 3 %{
             # go to the target line and select up to \n
             exec "%arg{2}g<a-x>H"
             # make sure the replacement is not a noop
-            set-register / "\Q%arg{3}\E"
+            set-register / "\A\Q%arg{3}\E\z"
             exec "<a-K><c-r>/<ret>"
             # replace
             set-register '"' %arg{3}
