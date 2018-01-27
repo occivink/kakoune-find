@@ -4,7 +4,9 @@
 declare-option str toolsclient
 declare-option -hidden int find_current_line 0
 declare-option -hidden str find_pattern
+
 declare-option -hidden str find_application_successes
+declare-option -hidden str find_application_ignored
 declare-option -hidden str find_application_failures
 
 define-command -params ..1 find %{
@@ -77,6 +79,8 @@ define-command find-apply-impl -params 3 %{
             set-register '"' %arg{3}
             exec R
             set-option -add buffer=*find* find_application_successes o
+        } catch %{
+            set-option -add buffer=*find* find_application_ignored o
         }
     }
 }
@@ -94,6 +98,7 @@ define-command find-apply-force-impl -params 3 %{
 
 define-command find-apply-changes -params ..1 %{
     unset-option buffer find_application_successes
+    unset-option buffer find_application_ignored
     unset-option buffer find_application_failures
     eval -save-regs 'c' -draft %{
         # select all lines that match the *find* pattern
@@ -102,17 +107,21 @@ define-command find-apply-changes -params ..1 %{
         eval -itersel %{
             try %{
                 %reg{c} %reg{1} %reg{2} %reg{3}
-                echo -debug success %opt{find_application_successes}
             } catch %{
-                set-option -add buffer find_application_failures x
+                set-option -add buffer find_application_failures o
             }
         }
     }
-    echo %sh{
+    echo -markup %sh{
+        printf "\"{Information}"
         s=${#kak_opt_find_application_successes}
         [ $s -ne 1 ] && p=s
+        printf "%i change%s applied" "$s" "$w"
+        i=${#kak_opt_find_application_ignored}
+        [ $i -gt 0 ] && printf ", %i ignored" "$i"
         f=${#kak_opt_find_application_failures}
-        printf "\"%i change%s applied, %i failed\"" "$s" "$p" "$f"
+        [ $f -gt 0 ] && printf ", %i failed" "$f"
+        printf "\""
     }
 }
 
