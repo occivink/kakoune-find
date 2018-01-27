@@ -9,7 +9,9 @@ declare-option -hidden str find_application_successes
 declare-option -hidden str find_application_ignored
 declare-option -hidden str find_application_failures
 
-define-command -params ..1 find %{
+define-command -params ..1 -docstring "
+find [<pattern>]: search for a pattern in all buffers
+" find %{
     eval -no-hooks -save-regs '/' %{
         eval -save-regs '' -draft %{
             %sh{
@@ -96,7 +98,10 @@ define-command find-apply-force-impl -params 3 %{
     }
 }
 
-define-command find-apply-changes -params ..1 %{
+define-command find-apply-changes -params ..1 -docstring "
+find-apply-changes [-force]: apply changes from *find* to their file
+If -force is specified, changes will also be applied to files withtout a buffer
+" %{
     unset-option buffer find_application_successes
     unset-option buffer find_application_ignored
     unset-option buffer find_application_failures
