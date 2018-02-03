@@ -46,23 +46,14 @@ find [<pattern>]: search for a pattern in all buffers
         eval -try-client %opt{toolsclient} %{
             buffer *find*
             set-option buffer find_pattern "%reg{/}"
-            set-option buffer filetype find
             set-option buffer find_current_line 0
+
+            add-highlighter buffer dynregex '%opt{find_pattern}' 0:black,yellow
+            add-highlighter buffer regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
+            add-highlighter buffer line '%opt{find_current_line}' default+b
+            map buffer normal <ret> :find-jump<ret>
         }
     }
-}
-
-hook global BufSetOption filetype=find %{
-    add-highlighter buffer group find
-    add-highlighter buffer/find dynregex '%opt{find_pattern}' 0:black,yellow
-    add-highlighter buffer/find regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
-    add-highlighter buffer/find line '%opt{find_current_line}' default+b
-    map buffer normal <ret> :find-jump<ret>
-}
-
-hook global BufSetOption filetype=(?!find).* %{
-    remove-highlighter buffer/find
-    unmap buffer normal <ret> :find-jump<ret>
 }
 
 declare-option str jumpclient
