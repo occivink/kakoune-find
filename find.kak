@@ -5,10 +5,6 @@ declare-option str toolsclient
 declare-option -hidden int find_current_line 0
 declare-option -hidden str find_pattern
 
-declare-option -hidden str find_application_successes
-declare-option -hidden str find_application_ignored
-declare-option -hidden str find_application_failures
-
 define-command -params ..1 -docstring "
 find [<pattern>]: search for a pattern in all buffers
 " find %{
@@ -71,9 +67,9 @@ define-command find-apply-impl -params 3 %{
             # replace
             set-register '"' %arg{3}
             exec R
-            set-option -add buffer=*find* find_application_successes o
+            set-register s "%reg{s}o"
         } catch %{
-            set-option -add buffer=*find* find_application_ignored o
+            set-register i "%reg{i}o"
         }
     }
 }
@@ -90,34 +86,36 @@ define-command find-apply-force-impl -params 3 %{
 }
 
 define-command find-apply-changes -params ..1 -docstring "
-find-apply-changes [-force]: apply changes from *find* to their file
-If -force is specified, changes will also be applied to files withtout a buffer
+find-apply-changes [-force]: apply changes from the current buffer to their file
+If -force is specified, changes will also be applied to files without a buffer
 " %{
-    unset-option buffer find_application_successes
-    unset-option buffer find_application_ignored
-    unset-option buffer find_application_failures
-    eval -save-regs 'c' -draft %{
-        # select all lines that match the *find* pattern
-        exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
-        set-register c %sh{ [ "$1" = "-force" ] && c=find-apply-force-impl || c=find-apply-impl; printf $c }
-        eval -itersel %{
-            try %{
-                %reg{c} %reg{1} %reg{2} %reg{3}
-            } catch %{
-                set-option -add buffer find_application_failures o
+    eval -save-regs 'sif' %{
+        set-register s ""
+        set-register i ""
+        set-register f ""
+        eval -save-regs 'c' -draft %{
+            # select all lines that match the *find* pattern
+            exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
+            set-register c %sh{ [ "$1" = "-force" ] && c=find-apply-force-impl || c=find-apply-impl; printf $c }
+            eval -itersel %{
+                try %{
+                    %reg{c} %reg{1} %reg{2} %reg{3}
+                } catch %{
+                    set-register f "%reg{f}o"
+                }
             }
         }
-    }
-    echo -markup %sh{
-        printf "\"{Information}"
-        s=${#kak_opt_find_application_successes}
-        [ $s -ne 1 ] && p=s
-        printf "%i change%s applied" "$s" "$w"
-        i=${#kak_opt_find_application_ignored}
-        [ $i -gt 0 ] && printf ", %i ignored" "$i"
-        f=${#kak_opt_find_application_failures}
-        [ $f -gt 0 ] && printf ", %i failed" "$f"
-        printf "\""
+        echo -markup %sh{
+            printf "\"{Information}"
+            s=${#kak_reg_s}
+            [ $s -ne 1 ] && p=s
+            printf "%i change%s applied" "$s" "$p"
+            i=${#kak_reg_i}
+            [ $i -gt 0 ] && printf ", %i ignored" "$i"
+            f=${#kak_reg_f}
+            [ $f -gt 0 ] && printf ", %i failed" "$f"
+            printf "\""
+        }
     }
 }
 
