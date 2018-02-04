@@ -54,7 +54,7 @@ find [<pattern>]: search for a pattern in all buffers
 
 declare-option str jumpclient
 
-define-command find-apply-impl -params 3 %{
+define-command -hidden find-apply-impl -params 3 %{
     eval -buffer %arg{1} %{
         # only change if the content is different
         # to avoid putting any noop in the undo stack
@@ -73,7 +73,7 @@ define-command find-apply-impl -params 3 %{
         }
     }
 }
-define-command find-apply-force-impl -params 3 %{
+define-command -hidden find-apply-force-impl -params 3 %{
     try %{
         find-apply-impl %arg{1} %arg{2} %arg{3}
     } catch %{
