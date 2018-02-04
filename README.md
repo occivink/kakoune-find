@@ -2,7 +2,7 @@
 
 [kakoune](http://kakoune.org) plugin to search for a pattern in all open buffers, and optionally replace it. Works similarly to `grep.kak`, but does not operate on files.
 
-[![demo](https://asciinema.org/a/138327.png)](https://asciinema.org/a/138327)
+[![demo](https://asciinema.org/a/160951.png)](https://asciinema.org/a/160951)
 
 ## Setup
 
