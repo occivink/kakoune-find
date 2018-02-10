@@ -9,38 +9,34 @@ define-command -params ..1 -docstring "
 find [<pattern>]: search for a pattern in all buffers
 " find %{
     eval -no-hooks -save-regs '/' %{
-        eval -save-regs '' -draft %{
-            %sh{
-                if [ -n "$1" ]; then
-                    echo "set-register / %arg{1}"
-                else
-                    echo "exec -save-regs '' <a-*>"
-                fi
-            }
-            try %{ delete-buffer *find* }
-            eval -buffer * %{
-                # create find buffer after we start iterating so as not to include it
-                eval -draft %{ edit -scratch *find* }
-                try %{
-                    exec '%s<ret>'
-                    # merge selections that are on the same line
-                    exec '<a-l>'
-                    exec '<a-;>;'
-                    eval -save-regs 'c"' -itersel %{
-                        set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
-                        # expand to full line and yank
-                        exec -save-regs '' '<a-x>Hy'
-                        # paste context followed by the selection
-                        # also align the selection in case it spans multiple lines
-                        exec -buffer *find* 'geo<esc>"cp<a-p>'
-                    }
+        try %{
+            %sh{ [ -z "$1" ] && echo fail }
+            set-register / %arg{1}
+        } catch %{
+            exec -save-regs '' "<a-*>"
+        }
+        try %{ delete-buffer *find* }
+        eval -buffer * %{
+            # create find buffer after we start iterating so as not to include it
+            eval -draft %{ edit -scratch *find* }
+            try %{
+                exec '%s<ret>'
+                # merge selections that are on the same line
+                exec '<a-l>'
+                exec '<a-;>;'
+                eval -save-regs 'c"' -itersel %{
+                    set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
+                    # expand to full line and yank
+                    exec -save-regs '' '<a-x>Hy'
+                    # paste context followed by the selection
+                    exec -buffer *find* 'geo<esc>"cp<a-p>'
                 }
             }
-            # delete empty line at the top
-            exec -buffer *find* d
         }
         eval -try-client %opt{toolsclient} %{
             buffer *find*
+            # delete empty line at the top
+            exec d
             set-option buffer find_pattern "%reg{/}"
             set-option buffer find_current_line 0
 
