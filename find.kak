@@ -13,7 +13,7 @@ find [<pattern>]: search for a pattern in all buffers
             %sh{ [ -z "$1" ] && echo fail }
             set-register / %arg{1}
         } catch %{
-            exec -save-regs '' "<a-*>"
+            exec -save-regs '' '*'
         }
         try %{ delete-buffer *find* }
         eval -buffer * %{
