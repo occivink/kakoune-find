@@ -116,7 +116,7 @@ If -force is specified, changes will also be applied to files without a buffer
 }
 
 define-command -hidden find-jump %{
-    eval -collapse-jumps %{
+    eval %{
         try %{
             exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
             set-option buffer find_current_line %val{cursor_line}
@@ -127,7 +127,7 @@ define-command -hidden find-jump %{
 }
 
 define-command find-next-match -docstring 'Jump to the next find match' %{
-    eval -collapse-jumps -try-client %opt{jumpclient} %{
+    eval -try-client %opt{jumpclient} %{
         buffer '*find*'
         exec "%opt{find_current_line}ggl/^[^\n]+:\d+:\d+:<ret>"
         find-jump
@@ -136,7 +136,7 @@ define-command find-next-match -docstring 'Jump to the next find match' %{
 }
 
 define-command find-previous-match -docstring 'Jump to the previous find match' %{
-    eval -collapse-jumps -try-client %opt{jumpclient} %{
+    eval -try-client %opt{jumpclient} %{
         buffer '*find*'
         exec "%opt{find_current_line}g<a-/>^[^\n]+:\d+:\d+:<ret>"
         find-jump
