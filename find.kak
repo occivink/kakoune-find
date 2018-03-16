@@ -7,6 +7,7 @@ declare-option -hidden str find_pattern
 
 define-command -params ..1 -docstring "
 find [<pattern>]: search for a pattern in all buffers
+If <pattern> is not specified, the main selection is used
 " find %{
     eval -no-hooks -save-regs '/' %{
         try %{
@@ -83,7 +84,7 @@ define-command -hidden find-apply-force-impl -params 3 %{
 
 define-command find-apply-changes -params ..1 -docstring "
 find-apply-changes [-force]: apply changes from the current buffer to their file
-If -force is specified, changes will also be applied to files without a buffer
+If -force is specified, changes will also be applied to files that do not have a buffer
 " %{
     eval -save-regs 'sif' %{
         set-register s ""
