@@ -3,49 +3,44 @@
 
 declare-option str toolsclient
 declare-option -hidden int find_current_line 0
-declare-option -hidden str find_pattern
 
 define-command -params ..1 -docstring "
 find [<pattern>]: search for a pattern in all buffers
 If <pattern> is not specified, the main selection is used
 " find %{
-    eval -no-hooks -save-regs '/' %{
+    try %{
+        %sh{ [ -z "$1" ] && echo fail }
+        set-register / %arg{1}
+    } catch %{
+        exec -save-regs '' '*'
+    }
+    try %{ delete-buffer *find* }
+    eval -no-hooks -buffer * %{
+        # create find buffer after we start iterating so as not to include it
+        eval -draft %{ edit -scratch *find* }
         try %{
-            %sh{ [ -z "$1" ] && echo fail }
-            set-register / %arg{1}
-        } catch %{
-            exec -save-regs '' '*'
-        }
-        try %{ delete-buffer *find* }
-        eval -buffer * %{
-            # create find buffer after we start iterating so as not to include it
-            eval -draft %{ edit -scratch *find* }
-            try %{
-                exec '%s<ret>'
-                # merge selections that are on the same line
-                exec '<a-l>'
-                exec '<a-;>;'
-                eval -save-regs 'c"' -itersel %{
-                    set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
-                    # expand to full line and yank
-                    exec -save-regs '' '<a-x>Hy'
-                    # paste context followed by the selection
-                    exec -buffer *find* 'geo<esc>"cp<a-p>'
-                }
+            exec '%s<ret>'
+            # merge selections that are on the same line
+            exec '<a-l>'
+            exec '<a-;>;'
+            eval -save-regs 'c"' -itersel %{
+                set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
+                # expand to full line and yank
+                exec -save-regs '' '<a-x>Hy'
+                # paste context followed by the selection
+                exec -buffer *find* 'geo<esc>"cp<a-p>'
             }
         }
-        eval -try-client %opt{toolsclient} %{
-            buffer *find*
-            # delete empty line at the top
-            exec d
-            set-option buffer find_pattern "%reg{/}"
-            set-option buffer find_current_line 0
-
-            add-highlighter buffer dynregex '%opt{find_pattern}' 0:black,yellow
-            add-highlighter buffer regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
-            add-highlighter buffer line '%opt{find_current_line}' default+b
-            map buffer normal <ret> :find-jump<ret>
-        }
+    }
+    eval -try-client %opt{toolsclient} %{
+        buffer *find*
+        # delete empty line at the top
+        exec d
+        set-option buffer find_current_line 0
+        add-highlighter buffer regex "%reg{/}" 0:black,yellow
+        add-highlighter buffer regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
+        add-highlighter buffer line '%opt{find_current_line}' default+b
+        map buffer normal <ret> :find-jump<ret>
     }
 }
 
