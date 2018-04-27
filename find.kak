@@ -15,7 +15,7 @@ If <pattern> is not specified, the main selection is used
         exec -save-regs '' '*'
     }
     try %{ delete-buffer *find* }
-    eval -no-hooks -buffer * %{
+    eval -buffer * %{
         # create find buffer after we start iterating so as not to include it
         eval -draft %{ edit -scratch *find* }
         try %{
