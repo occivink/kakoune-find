@@ -2,6 +2,7 @@
 # similar to grep.kak
 
 declare-option str toolsclient
+declare-option str jumpclient
 declare-option -hidden int find_current_line 0
 
 define-command -params ..1 -docstring "
@@ -9,7 +10,7 @@ find [<pattern>]: search for a pattern in all buffers
 If <pattern> is not specified, the main selection is used
 " find %{
     try %{
-        %sh{ [ -z "$1" ] && echo fail }
+        eval %sh{ [ -z "$1" ] && echo fail }
         set-register / %arg{1}
     } catch %{
         exec -save-regs '' '*'
@@ -28,7 +29,7 @@ If <pattern> is not specified, the main selection is used
                 # expand to full line and yank
                 exec -save-regs '' '<a-x>Hy'
                 # paste context followed by the selection
-                exec -buffer *find* 'geo<esc>"cp<a-p>'
+                exec -buffer *find* 'geo<esc>"cPP'
             }
         }
     }
@@ -37,14 +38,13 @@ If <pattern> is not specified, the main selection is used
         # delete empty line at the top
         exec d
         set-option buffer find_current_line 0
-        add-highlighter buffer regex "%reg{/}" 0:black,yellow
-        add-highlighter buffer regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
-        add-highlighter buffer line '%opt{find_current_line}' default+b
+        addhl buffer/ regex "%reg{/}" 0:black,yellow
+        addhl buffer/ regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
+        addhl buffer/ line '%opt{find_current_line}' default+b
         map buffer normal <ret> :find-jump<ret>
     }
 }
 
-declare-option str jumpclient
 
 define-command -hidden find-apply-impl -params 3 %{
     eval -buffer %arg{1} %{
@@ -55,7 +55,7 @@ define-command -hidden find-apply-impl -params 3 %{
             exec "%arg{2}g<a-x>H"
             # make sure the replacement is not a noop
             set-register / "\A\Q%arg{3}\E\z"
-            exec "<a-K><c-r>/<ret>"
+            exec "<a-K><ret>"
             # replace
             set-register '"' %arg{3}
             exec R
@@ -88,7 +88,7 @@ If -force is specified, changes will also be applied to files that do not have a
         eval -save-regs 'c' -draft %{
             # select all lines that match the *find* pattern
             exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
-            set-register c %sh{ [ "$1" = "-force" ] && c=find-apply-force-impl || c=find-apply-impl; printf $c }
+            set-register c %sh{ [ "$1" = "-force" ] && c=find-apply-force-impl || c=find-apply-impl; printf "$c" }
             eval -itersel %{
                 try %{
                     %reg{c} %reg{1} %reg{2} %reg{3}
@@ -98,15 +98,14 @@ If -force is specified, changes will also be applied to files that do not have a
             }
         }
         echo -markup %sh{
-            printf "\"{Information}"
-            s=${#kak_reg_s}
+            printf "{Information}"
+            s=${#kak_main_reg_s}
             [ $s -ne 1 ] && p=s
             printf "%i change%s applied" "$s" "$p"
-            i=${#kak_reg_i}
+            i=${#kak_main_reg_i}
             [ $i -gt 0 ] && printf ", %i ignored" "$i"
-            f=${#kak_reg_f}
+            f=${#kak_main_reg_f}
             [ $f -gt 0 ] && printf ", %i failed" "$f"
-            printf "\""
         }
     }
 }
