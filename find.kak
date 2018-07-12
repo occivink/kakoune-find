@@ -53,9 +53,6 @@ define-command -hidden find-apply-impl -params 3 %{
         try %{
             # go to the target line and select up to \n
             exec "%arg{2}g<a-x>H"
-            # make sure the replacement is not a noop
-            set-register / "\A\Q%arg{3}\E\z"
-            exec "<a-K><ret>"
             # replace
             set-register '"' %arg{3}
             exec R
@@ -81,14 +78,14 @@ define-command find-apply-changes -params ..1 -docstring "
 find-apply-changes [-force]: apply changes from the current buffer to their file
 If -force is specified, changes will also be applied to files that do not have a buffer
 " %{
-    eval -save-regs 'sif' %{
+    eval -no-hooks -save-regs 'sif' %{
         set-register s ""
         set-register i ""
         set-register f ""
         eval -save-regs 'c' -draft %{
             # select all lines that match the *find* pattern
             exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
-            set-register c %sh{ [ "$1" = "-force" ] && c=find-apply-force-impl || c=find-apply-impl; printf "$c" }
+            set-register c %sh{ [ "$1" = "-force" ] && printf find-apply-force-impl || printf find-apply-impl }
             eval -itersel %{
                 try %{
                     %reg{c} %reg{1} %reg{2} %reg{3}
