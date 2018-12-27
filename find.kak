@@ -1,96 +1,104 @@
 # search for a regex pattern among all opened buffers
 # similar to grep.kak
 
-declare-option str toolsclient
-declare-option str jumpclient
-declare-option -hidden int find_current_line 0
+decl str toolsclient
+decl str jumpclient
+decl -hidden int find_current_line 0
 
-define-command -params ..1 -docstring "
+def -params ..1 -docstring "
 find [<pattern>]: search for a pattern in all buffers
-If <pattern> is not specified, the main selection is used
+If <pattern> is not specified, the content of the main selection is used
 " find %{
     try %{
         eval %sh{ [ -z "$1" ] && echo fail }
-        set-register / %arg{1}
+        reg / %arg{1}
     } catch %{
         exec -save-regs '' '*'
     }
-    try %{ delete-buffer *find* }
-    eval -buffer * %{
-        # create find buffer after we start iterating so as not to include it
-        eval -draft %{ edit -scratch *find* }
-        try %{
-            exec '%s<ret>'
-            # merge selections that are on the same line
-            exec '<a-l>'
-            exec '<a-;>;'
-            eval -save-regs 'c"' -itersel %{
-                set-register c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
-                # expand to full line and yank
-                exec -save-regs '' '<a-x>Hy'
-                # paste context followed by the selection
-                exec -buffer *find* 'geo<esc>"cPP'
+    eval -draft -no-hooks -save-regs '"' %{
+        try %{ delete-buffer *find* }
+        # debug so that it's not included in the iteration
+        edit -scratch -debug *find-tmp*
+        eval -buffer * %{
+            try %{
+                exec '%s<ret>'
+                # merge selections that are on the same line
+                exec '<a-l>'
+                exec '<a-;>;'
+                eval -save-regs 'c"' -itersel %{
+                    reg c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
+                    # expand to full line and yank
+                    exec -save-regs '' '<a-x>Hy'
+                    # paste context followed by the selection
+                    exec -buffer *find-tmp* 'geo<esc>"cPP'
+                }
             }
         }
-    }
-    eval -try-client %opt{toolsclient} %{
-        buffer *find*
-        # delete empty line at the top
-        exec d
-        set-option buffer find_current_line 0
+        exec -save-regs '' 'd%y'
+        delete-buffer *find-tmp*
+        edit -scratch *find*
+        exec R
+        set buffer find_current_line 0
         addhl buffer/ regex "%reg{/}" 0:black,yellow
-        addhl buffer/ regex "^([^\n]+):(\d+):(\d+):" 1:cyan,black 2:green,black 3:green,black
+        # final so that %reg{/} doesn't get highlighted in the header
+        addhl buffer/ regex "^([^\n]+):(\d+):(\d+):" 1:cyan,default+F 2:green,default+F 3:green,default+F
         addhl buffer/ line '%opt{find_current_line}' default+b
         map buffer normal <ret> :find-jump<ret>
     }
+    eval -try-client %opt{toolsclient} %{
+        buffer *find*
+    }
 }
 
 
-define-command -hidden find-apply-impl -params 3 %{
+def -hidden find-apply-impl -params 4 %{
     eval -buffer %arg{1} %{
-        # only change if the content is different
-        # to avoid putting any noop in the undo stack
         try %{
-            # go to the target line and select up to \n
+            # go to the target line and select it (except for \n)
             exec "%arg{2}g<a-x>H"
+            # check for noop, and abort if it's one
+            reg / %arg{3}
+            exec <a-K><ret>
             # replace
-            set-register '"' %arg{3}
+            reg '"' %arg{4}
             exec R
-            set-register s "%reg{s}o"
+            reg s "%reg{s}o"
         } catch %{
-            set-register i "%reg{i}o"
+            reg i "%reg{i}o"
         }
     }
 }
-define-command -hidden find-apply-force-impl -params 3 %{
+def -hidden find-apply-force-impl -params 4 %{
     try %{
-        find-apply-impl %arg{1} %arg{2} %arg{3}
+        find-apply-impl %arg{@}
     } catch %{
         # the buffer wasn't open: try editing it
         # if this fails there is nothing we can do
         eval -draft "edit -existing %arg{1}"
-        find-apply-impl %arg{1} %arg{2} %arg{3}
+        find-apply-impl %arg{@}
         eval -buffer %arg{1} "write; delete-buffer"
     }
 }
 
-define-command find-apply-changes -params ..1 -docstring "
-find-apply-changes [-force]: apply changes from the current buffer to their file
-If -force is specified, changes will also be applied to files that do not have a buffer
+def find-apply-changes -params ..1 -docstring "
+find-apply-changes [-force]: apply changes specified in the current buffer to their respective file
+If -force is specified, changes will also be applied to files that do not currently have a buffer
 " %{
-    eval -no-hooks -save-regs 'sif' %{
-        set-register s ""
-        set-register i ""
-        set-register f ""
-        eval -save-regs 'c' -draft %{
+    eval -no-hooks -save-regs 'csif' %{
+        reg s ""
+        reg i ""
+        reg f ""
+        reg c %sh{ [ "$1" = "-force" ] && printf find-apply-force-impl || printf find-apply-impl }
+        eval -save-regs '/"' -draft %{
             # select all lines that match the *find* pattern
-            exec '%s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
-            set-register c %sh{ [ "$1" = "-force" ] && printf find-apply-force-impl || printf find-apply-impl }
+            exec '%3s^([^\n]+):(\d+):\d+:([^\n]*)$<ret>'
             eval -itersel %{
                 try %{
-                    %reg{c} %reg{1} %reg{2} %reg{3}
+                    exec -save-regs '' <a-*>
+                    echo -debug %reg{1} %reg{2} %reg{/}
+                    %reg{c} %reg{1} %reg{2} %reg{/} %reg{3}
                 } catch %{
-                    set-register f "%reg{f}o"
+                    reg f "%reg{f}o"
                 }
             }
         }
@@ -107,18 +115,18 @@ If -force is specified, changes will also be applied to files that do not have a
     }
 }
 
-define-command -hidden find-jump %{
+def -hidden find-jump %{
     eval %{
         try %{
             exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
-            set-option buffer find_current_line %val{cursor_line}
+            set buffer find_current_line %val{cursor_line}
             eval -try-client %opt{jumpclient} "edit -existing %reg{1} %reg{2} %reg{3}"
             try %{ focus %opt{jumpclient} }
         }
     }
 }
 
-define-command find-next-match -docstring 'Jump to the next find match' %{
+def find-next-match -docstring 'Jump to the next find match' %{
     eval -try-client %opt{jumpclient} %{
         buffer '*find*'
         exec "%opt{find_current_line}ggl/^[^\n]+:\d+:\d+:<ret>"
@@ -127,7 +135,7 @@ define-command find-next-match -docstring 'Jump to the next find match' %{
     try %{ eval -client %opt{toolsclient} %{ exec %opt{find_current_line}g } }
 }
 
-define-command find-previous-match -docstring 'Jump to the previous find match' %{
+def find-previous-match -docstring 'Jump to the previous find match' %{
     eval -try-client %opt{jumpclient} %{
         buffer '*find*'
         exec "%opt{find_current_line}g<a-/>^[^\n]+:\d+:\d+:<ret>"
