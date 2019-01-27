@@ -74,9 +74,9 @@ def -hidden find-apply-force-impl -params 4 %{
     } catch %{
         # the buffer wasn't open: try editing it
         # if this fails there is nothing we can do
-        eval -draft "edit -existing %arg{1}"
+        eval -no-hooks -draft "edit -existing %arg{1}"
         find-apply-impl %arg{@}
-        eval -buffer %arg{1} "write; delete-buffer"
+        eval -no-hooks -buffer %arg{1} "write; delete-buffer"
     }
 }
 
@@ -95,7 +95,6 @@ If -force is specified, changes will also be applied to files that do not curren
             eval -itersel %{
                 try %{
                     exec -save-regs '' <a-*>
-                    echo -debug %reg{1} %reg{2} %reg{/}
                     %reg{c} %reg{1} %reg{2} %reg{/} %reg{3}
                 } catch %{
                     reg f "%reg{f}o"
