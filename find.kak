@@ -23,8 +23,7 @@ If <pattern> is not specified, the content of the main selection is used
             try %{
                 exec '%s<ret>'
                 # merge selections that are on the same line
-                exec '<a-l>'
-                exec '<a-;>;'
+                exec '<a-s><a-L><a-;>;'
                 eval -save-regs 'c"' -itersel %{
                     reg c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
                     # expand to full line and yank
