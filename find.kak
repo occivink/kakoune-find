@@ -94,7 +94,7 @@ If -force is specified, changes will also be applied to files that do not curren
             eval -itersel %{
                 try %{
                     exec -save-regs '' <a-*>
-                    %reg{c} %reg{1} %reg{2} %reg{/} %reg{3}
+                    %reg{c} %reg{1} %reg{2} "%reg{/}" %reg{3}
                 } catch %{
                     reg f "%reg{f}o"
                 }
