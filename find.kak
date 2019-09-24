@@ -118,7 +118,7 @@ def -hidden find-jump %{
         try %{
             exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
             set buffer find_current_line %val{cursor_line}
-            eval -try-client %opt{jumpclient} "edit -existing %reg{1} %reg{2} %reg{3}"
+            eval -try-client %opt{jumpclient} %{ edit -existing %reg{1} %reg{2} %reg{3} }
             try %{ focus %opt{jumpclient} }
         }
     }
