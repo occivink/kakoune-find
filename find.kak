@@ -94,7 +94,7 @@ If -force is specified, changes will also be applied to files that do not curren
             eval -itersel %{
                 try %{
                     exec -save-regs '' <a-*>
-                    %reg{c} %reg{1} %reg{2} "%reg{/}" %reg{3}
+                    %reg{c} %reg{1} %reg{2} "\A%reg{/}\z" %reg{3}
                 } catch %{
                     reg f "%reg{f}o"
                 }
@@ -118,7 +118,7 @@ def -hidden find-jump %{
         try %{
             exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
             set buffer find_current_line %val{cursor_line}
-            eval -try-client %opt{jumpclient} %{ edit -existing %reg{1} %reg{2} %reg{3} }
+            eval -try-client %opt{jumpclient} -verbatim -- edit -existing %reg{1} %reg{2} %reg{3}
             try %{ focus %opt{jumpclient} }
         }
     }
