@@ -90,7 +90,7 @@ If -force is specified, changes will also be applied to files that do not curren
         reg c %sh{ [ "$1" = "-force" ] && printf find-apply-force-impl || printf find-apply-impl }
         eval -save-regs '/"' -draft %{
             # select all lines that match the *find* pattern
-            exec '%3s^([^\n]+):(\d+)(?:\d+):([^\n]*)$<ret>'
+            exec '%3s^([^\n]+):(\d+)(?:\d+)?:([^\n]*)$<ret>'
             eval -itersel %{
                 try %{
                     exec -save-regs '' <a-*>
