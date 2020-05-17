@@ -40,7 +40,7 @@ If <pattern> is not specified, the content of the main selection is used
         set buffer find_current_line 0
         addhl buffer/ regex "%reg{/}" 0:black,yellow
         # final so that %reg{/} doesn't get highlighted in the header
-        addhl buffer/ regex "^([^\n]+):(\d+):(\d+):" 1:cyan,default+F 2:green,default+F 3:green,default+F
+        addhl buffer/ regex "^((?:\w:)?[^:\n]+):(\d+):(\d+):" 1:cyan,default+F 2:green,default+F 3:green,default+F
         addhl buffer/ line '%opt{find_current_line}' default+b
         map buffer normal <ret> :find-jump<ret>
     }
@@ -90,7 +90,7 @@ If -force is specified, changes will also be applied to files that do not curren
         reg c %sh{ [ "$1" = "-force" ] && printf find-apply-force-impl || printf find-apply-impl }
         eval -save-regs '/"' -draft %{
             # select all lines that match the *find* pattern
-            exec '%3s^([^\n]+?):(\d+)(?::\d+)?:([^\n]*)$<ret>'
+            exec '%3s^((?:\w:)?[^:\n]+?):(\d+)(?::\d+)?:([^\n]*)$<ret>'
             eval -itersel %{
                 try %{
                     exec -save-regs '' <a-*>
@@ -116,7 +116,7 @@ If -force is specified, changes will also be applied to files that do not curren
 def -hidden find-jump %{
     eval %{
         try %{
-            exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
+            exec -save-regs '' '<a-x>s^((?:\w:)?[^:\n]+):(\d+):(\d+):<ret>'
             set buffer find_current_line %val{cursor_line}
             eval -try-client %opt{jumpclient} -verbatim -- edit -existing %reg{1} %reg{2} %reg{3}
             try %{ focus %opt{jumpclient} }
@@ -127,7 +127,7 @@ def -hidden find-jump %{
 def find-next-match -docstring 'Jump to the next find match' %{
     eval -try-client %opt{jumpclient} %{
         buffer '*find*'
-        exec "%opt{find_current_line}ggl/^[^\n]+:\d+:\d+:<ret>"
+        exec "%opt{find_current_line}ggl/^(?:\w:)?[^:\n]+:\d+:\d+:<ret>"
         find-jump
     }
     try %{ eval -client %opt{toolsclient} %{ exec %opt{find_current_line}g } }
@@ -136,7 +136,7 @@ def find-next-match -docstring 'Jump to the next find match' %{
 def find-previous-match -docstring 'Jump to the previous find match' %{
     eval -try-client %opt{jumpclient} %{
         buffer '*find*'
-        exec "%opt{find_current_line}g<a-/>^[^\n]+:\d+:\d+:<ret>"
+        exec "%opt{find_current_line}g<a-/>^(?:\w:)?[^:\n]+:\d+:\d+:<ret>"
         find-jump
     }
     try %{ eval -client %opt{toolsclient} %{ exec %opt{find_current_line}g } }
