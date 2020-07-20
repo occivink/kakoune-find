@@ -20,7 +20,7 @@ Replacing is done from the `*find*` buffer. Write directly there the changes tha
 
 By default, this command only works on open buffers. However, you can specify `-force` to make kakoune temporarily open the file to write the change.
 
-Since the format is the same as `grep.kak`'s, this command can just as well be used from a `*grep*` buffer. Any line that doesn't follow the `<file>:<line>:<column>:<content>` pattern is simply ignored. 
+Since the format is the same as [grep.kak's](https://github.com/mawww/kakoune/blob/master/rc/tools/grep.kak), this command can just as well be used from a `*grep*` buffer. Any line that doesn't follow the `<file>:<line>:<column>:<content>` pattern is simply ignored. 
 
 ## License
 
