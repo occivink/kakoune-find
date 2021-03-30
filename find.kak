@@ -15,11 +15,11 @@ If <pattern> is not specified, the content of the main selection is used
     } catch %{
         exec -save-regs '' '*'
     }
-    eval -draft -no-hooks -save-regs '"' %{
+    eval -draft -save-regs '"' %{
         try %{ delete-buffer *find* }
         # debug so that it's not included in the iteration
         edit -scratch -debug *find-tmp*
-        eval -buffer * %{
+        eval -no-hooks -buffer * %{
             try %{
                 exec '%s<ret>'
                 # merge selections that are on the same line
