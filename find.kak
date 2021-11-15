@@ -73,7 +73,7 @@ def -hidden find-apply-force-impl -params 4 %{
     } catch %{
         # the buffer wasn't open: try editing it
         # if this fails there is nothing we can do
-        eval -no-hooks -draft "edit -existing %arg{1}"
+        eval -verbatim -no-hooks -draft -- edit -existing %arg{1}
         find-apply-impl %arg{@}
         eval -no-hooks -buffer %arg{1} "write; delete-buffer"
     }
