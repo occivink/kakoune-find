@@ -27,7 +27,7 @@ If <pattern> is not specified, the content of the main selection is used
                 eval -save-regs 'c"' -itersel %{
                     reg c "%val{bufname}:%val{cursor_line}:%val{cursor_column}:"
                     # expand to full line and yank
-                    exec -save-regs '' '<a-x>Hy'
+                    exec -save-regs '' '<semicolon>xHy'
                     # paste context followed by the selection
                     exec -buffer *find-tmp* 'geo<esc>"cPP'
                 }
@@ -54,7 +54,7 @@ def -hidden find-apply-impl -params 4 %{
     eval -buffer %arg{1} %{
         try %{
             # go to the target line and select it (except for \n)
-            exec "%arg{2}g<a-x>H"
+            exec "%arg{2}g<semicolon>xH"
             # check for noop, and abort if it's one
             reg / %arg{3}
             exec <a-K><ret>
@@ -116,7 +116,7 @@ If -force is specified, changes will also be applied to files that do not curren
 def -hidden find-jump %{
     eval %{
         try %{
-            exec -save-regs '' '<a-x>s^([^\n]+):(\d+):(\d+):<ret>'
+            exec -save-regs '' '<semicolon>xs^([^\n]+):(\d+):(\d+):<ret>'
             set buffer find_current_line %val{cursor_line}
             eval -try-client %opt{jumpclient} -verbatim -- edit -existing %reg{1} %reg{2} %reg{3}
             try %{ focus %opt{jumpclient} }
