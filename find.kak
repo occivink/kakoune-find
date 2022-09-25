@@ -29,7 +29,9 @@ If <pattern> is not specified, the content of the main selection is used
                     # expand to full line and yank
                     exec -save-regs '' '<semicolon>xHy'
                     # paste context followed by the selection
-                    exec -buffer *find-tmp* 'geo<esc>"cPP'
+                    # older Kakoune doesn't select pasted text so make sure we
+                    # to move the cursor to the end of the pasted text after P
+                    exec -buffer *find-tmp* 'geo<esc>"cPhglp'
                 }
             }
         }
